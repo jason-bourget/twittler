@@ -3,24 +3,153 @@
   <head>
     <script src="jquery.js"></script>
     <script src="data_generator.js"></script>
+    <script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="stylesheet.css">
+    <link href="https://fonts.googleapis.com/css?family=Quattrocento+Sans" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Indie+Flower" rel="stylesheet">
   </head>
   <body>
-    <script>
+
+  <script>
+
+        var visitor = 'Guest';
+        streams.users[visitor] = [];
 
       $(document).ready(function(){
+
+        //make both input fields, so they format the same
+        // make same height as buttons
+        // create a div for each one, then add to div? how does that work...
+
+        // declare the jQuery body var, and setting the HTML to an empty string
         var $body = $('body');
         $body.html('');
 
-        var index = streams.home.length - 1;
-        while(index >= 0){
-          var tweet = streams.home[index];
-          var $tweet = $('<div></div>');
-          $tweet.text('@' + tweet.user + ': ' + tweet.message);
-          $tweet.appendTo($body);
-          index -= 1;
+        // call moments, a human-friendly time formatting library
+        moment().format();
+
+        // create the tweetspace
+        var $tweets = $('<section></section>')
+        $tweets.appendTo($body)
+
+        // add a refresh button
+        var $refresh = $('<div></div>')
+        $refresh.html('<button type="button" id="refresh" class="btn btn-1 btn-1a"></button>')
+        $refresh.prependTo($body)
+
+        // add refresh button handler
+        $('#refresh').click(refreshTweets)
+
+        // add user tweet input
+        var $tweetInput = $('<div></div>')
+        $tweetInput.html('<input type="text" id="tweetInput" placeholder="Type here for instant dopamine release"></input>')
+        $tweetInput.prependTo($body)
+
+        // add button for user to submit tweet
+        var $tweetButton = $('<div></div>')
+        $tweetButton.html('<button type="button" id="submit" class="btn btn-1 btn-1a">Submit Tweet</button>')
+        $tweetButton.appendTo($tweetInput)
+
+        $('#submit').click(submitTweet)
+
+        function submitTweet() {
+          var text = $('#tweetInput').val();
+          if (!text) {
+            text = 'too sexy to manually compose a tweet'
+          }
+          writeTweet(text);
+          $('#tweetInput').val('');
+          refreshTweets();
         }
 
-      });
+        // add handle field
+        var $handle = $('<div></div>');
+        $handle.html('<input type="text" name="handle" id="handleInput" placeholder="What should we call you?">')
+        $handle.prependTo($body)
+
+        // add handle submission button
+        var $submitHandle = $('<div></div>');
+        $submitHandle.html('<button type="button" id="submitHandle" class="btn btn-1 btn-1a">Submit Handle</button>')
+        $submitHandle.appendTo($handle)
+
+        // add click handler to submission button
+        $('#submitHandle').click(submitHandle)
+
+        // submits handle
+        function submitHandle() {
+          var handle = $('#handleInput').val()
+          if(handle) {
+            visitor = handle;
+            streams.users[visitor] = []
+            $('#handleInput').val('')
+          }
+        }
+
+        // add header
+        $('<h1>Twiddler</h1>').prependTo('body')
+        
+        refreshTweets();
+
+        // refresh the tweet space
+        function refreshTweets() {
+          $('#refresh').text('see new tweets')
+          $tweets.html('');
+          // setting index to the last index of the streams.home array
+          var index = streams.home.length - 1;
+          // starting a while loop
+          while(index >= 0){
+            // declaring tweet to be the value of the last tweet in the array
+            var tweet = streams.home[index];
+            // declaring/setting the jQuery tweet variable to an empty div
+            var $tweet = $('<div class="tweets"></div>');
+            // adding the tweet text to the blank div
+            $tweet.html('<a>' + '@' + tweet.user + '</a>' + ': ' + tweet.message)
+            // creating a timestamp
+            var $timeStamp = $('<div class="timestamps"></div>')
+            $timeStamp.text(formatTimeStamp(tweet))
+            // appending timeStamp to tweet
+            $timeStamp.appendTo($tweet);
+            // adding the tweet to the top of the tweetspace
+            $tweet.appendTo($tweets);
+            index -= 1;
+          }
+          $('a').click(filterTweets)
+        }
+
+        function filterTweets() {
+          $tweets.html('');
+          // set user to the anchor element that was clicked
+          var user = $(this).text()
+          // remove the @ from the user's handle
+          user = user.replace('@', '')
+          console.log(user)
+          var index = streams.users[user].length - 1;
+          while(index >= 0){
+            var tweet = streams.users[user][index];
+            var $tweet = $('<div class="tweets"></div>');
+            $tweet.html('<a>' + '@' + tweet.user + '</a>' + ': ' + tweet.message)
+            var $timeStamp = $('<div class="timestamps"></div>')
+            $timeStamp.text(formatTimeStamp(tweet))
+            $timeStamp.appendTo($tweet);
+            $tweet.appendTo($tweets);
+            index -= 1;
+          }
+          // change the navigation button
+          $('#refresh').off()
+          $('#refresh').text('back to everyone')
+          $('#refresh').click(refreshTweets)
+        }
+
+        // creates a human-friendly timestamp
+        function formatTimeStamp(tweet) {
+          var timeString = 'Tweetled ';
+          var tweetedAt = tweet.created_at
+          var fromNow = moment(tweetedAt).fromNow()
+          timeString += fromNow
+          return timeString
+        }
+
+        });
 
     </script>
   </body>
